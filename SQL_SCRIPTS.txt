@@ -1,0 +1,116 @@
+# creating and using db
+create database pavandb;
+use pavandb;
+
+
+
+#creating table with columns with respect to the csv data
+create table E_commerce (
+InvoiceNo varchar(10),
+	StockCode varchar(10),
+	Description varchar(100),
+	Quantity int ,
+    Month int,
+    Day int,
+    Year int,
+	UnitPrice float,
+	CustomerID varchar(10),
+	Country varchar(20)
+    );
+  
+  
+  
+# loading csv data to the table    
+load data local infile 'H:/DATA Analysis/E-commerce data/updated_data.csv' 
+into table e_commerce  
+fields terminated by ',' ;
+
+
+
+#deleting the first row as it contains csv file column headers
+delete from e_commerce limit 1;
+commit;
+
+
+
+# Checking for rows that have NULL values in Description column
+select * from e_commerce where description = "NULL";
+
+
+
+select  a.stockcode , a.description ,  b.stockcode , b.description 
+from e_commerce a inner join e_commerce b 
+on a.StockCode = b.StockCode and
+a.InvoiceNo <> b.InvoiceNo and
+a.description = "NULL" and b.description <> "NULL";
+ 
+ 
+ 
+#Updating the NULL values of description column 
+update e_commerce a inner join e_commerce b 
+on a.StockCode = b.StockCode and
+a.InvoiceNo <> b.InvoiceNo and
+a.description = "NULL" and b.description <> "NULL"
+set a.description = if(a.description = "NULL",b.description,a.description);
+commit;
+ 
+ 
+ 
+#Deleting remaining left over records(110) where there is no description for their corresponding stockcode in the entire dataset
+delete from e_commerce where Description = "NULL";
+commit;
+
+
+
+# Checking for rows that have NULL values in CustomerID column
+select * from e_commerce where customerid = "NULL";
+# We have around 1333281 NULL values
+#Replacing all the NULL customerID values with most frequent CustomerID i.e with the mode value of CustomerID column
+
+
+
+#Finding most occured customerID
+select customerID , count(customerID) from e_commerce group by customerID order by count(customerID) desc ;
+
+
+
+#updating NULL customerid with most frequent customerid
+update e_commerce set customerid = "17841" where customerid = "NULL";
+commit;
+
+
+
+
+
+
+#Creating a view to create sales column
+CREATE OR REPLACE VIEW Sales
+AS
+select *,CASE 
+           WHEN  Month = 1 THEN 'January'
+           WHEN  Month = 2 THEN 'February'
+           WHEN  Month = 3 THEN 'March'
+           WHEN  Month = 4 THEN 'April'
+           WHEN  Month = 5 THEN 'May'
+           WHEN  Month = 6 THEN 'June'
+           WHEN  Month = 7 THEN 'July'
+           WHEN  Month = 8 THEN 'August'
+           WHEN  Month = 9 THEN 'September'
+           WHEN  Month = 10 THEN 'October'
+           WHEN  Month = 11 THEN 'November'
+           WHEN  Month = 12 THEN 'December'
+           ELSE 'No value'
+        END AS month_name , floor(Quantity * UnitPrice) AS Sales
+        from e_commerce;
+
+
+
+
+
+
+
+
+
+
+
+
